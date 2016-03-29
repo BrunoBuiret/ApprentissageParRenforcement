@@ -7,6 +7,8 @@ import java.util.List;
 import environnement.Action;
 import environnement.Environnement;
 import environnement.Etat;
+import java.util.Map;
+import javafx.util.Pair;
 
 /**
  *
@@ -14,31 +16,48 @@ import environnement.Etat;
  *
  */
 public class QLearningAgent extends RLAgent {
-    //TODO
+
+    /**
+     * 
+     */
+    protected Map<Pair<Etat, Action>, Double> qValues;
 
     /**
      *
      * @param alpha
      * @param gamma
-     * @param Environnement
+     * @param _env
      */
-    public QLearningAgent(double alpha, double gamma,
-            Environnement _env) {
+    public QLearningAgent(double alpha, double gamma, Environnement _env) {
         super(alpha, gamma, _env);
-        //TODO
-
+        
+        this.qValues = new HashMap<>();
     }
 
     /**
-     * renvoi la (les) action(s) de plus forte(s) valeur(s) dans l'etat e
+     * renvoie la (les) action(s) de plus forte(s) valeur(s) dans l'etat e
      *
-     * renvoi liste vide si aucunes actions possibles dans l'etat
+     * renvoie liste vide si aucunes actions possibles dans l'etat
      */
     @Override
     public List<Action> getPolitique(Etat e) {
-        //TODO
-        return null;
-
+        List<Action> policy = new ArrayList<>();
+        List<Action> availableActions = this.getActionsLegales(e);
+        Double maxQ = - Double.MAX_VALUE;
+        Double currentQ;
+        
+        for (Action action : availableActions) {
+            currentQ = this.getQValeur(e, action);
+            if (currentQ > maxQ) {
+                policy.clear();
+                policy.add(action);
+                maxQ = currentQ;
+            } else if (currentQ == maxQ) {
+                policy.add(action);
+            }
+        }
+        
+        return policy;
     }
 
     /**
@@ -46,21 +65,30 @@ public class QLearningAgent extends RLAgent {
      */
     @Override
     public double getValeur(Etat e) {
-        //TODO
-        return 0.0;
+        List<Action> actions = this.getPolitique(e);
+        
+        if (actions.size() > 0) {
+            Double sum = 0.;
+            
+            for (Action action : actions) {
+                sum += this.getQValeur(e, action);
+            }
+            
+            return sum / actions.size();
+        }
+        
+        return - Double.MAX_VALUE;
 
     }
 
     /**
-     *
      * @param e
      * @param a
      * @return Q valeur du couple (e,a)
      */
     @Override
     public double getQValeur(Etat e, Action a) {
-        //TODO
-        return 0.0;
+        return this.qValues.getOrDefault(new Pair(e, a), - Double.MAX_VALUE);
     }
 
     /**
@@ -68,10 +96,19 @@ public class QLearningAgent extends RLAgent {
      */
     @Override
     public void setQValeur(Etat e, Action a, double d) {
-        //TODO
+        this.qValues.put(new Pair(e, a), d);
 
         //mise a jour vmin et vmax pour affichage gradient de couleur
-        //...
+        for (Map.Entry<Pair<Etat, Action>, Double> entry: this.qValues.entrySet()) {
+            if (this.vmax < entry.getValue()) {
+                this.vmax = entry.getValue();
+            }
+            
+            if (this.vmin > entry.getValue()) {
+                this.vmin = entry.getValue();
+            }
+        }
+        
         this.notifyObs();
     }
 
@@ -89,7 +126,14 @@ public class QLearningAgent extends RLAgent {
      */
     @Override
     public void endStep(Etat e, Action a, Etat esuivant, double reward) {
-        //TODO
+        Double maxQ = - Double.MAX_VALUE;
+        for (Map.Entry<Pair<Etat, Action>, Double> entry : this.qValues.entrySet()) {
+            if (entry.getKey().getKey().equals(e) && maxQ < entry.getValue()) {
+                maxQ = entry.getValue();
+            }
+        }
+        Double value = (1 - this.alpha) * this.getQValeur(e, a) + alpha * (reward + this.gamma * maxQ);
+        this.setQValeur(e, a, value);
 
     }
 
@@ -106,7 +150,8 @@ public class QLearningAgent extends RLAgent {
     public void reset() {
         super.reset();
         this.episodeNb = 0;
-        //TODO
+        
+        this.qValues.clear();
 
         this.notifyObs();
     }
