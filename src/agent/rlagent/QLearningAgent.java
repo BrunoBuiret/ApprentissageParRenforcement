@@ -8,6 +8,7 @@ import environnement.Action;
 import environnement.Environnement;
 import environnement.Etat;
 import java.util.Map;
+import java.util.Objects;
 import javafx.util.Pair;
 
 /**
@@ -43,7 +44,7 @@ public class QLearningAgent extends RLAgent {
     public List<Action> getPolitique(Etat e) {
         List<Action> policy = new ArrayList<>();
         List<Action> availableActions = this.getActionsLegales(e);
-        Double maxQ = - Double.MAX_VALUE;
+        Double maxQ = 0.;
         Double currentQ;
         
         for (Action action : availableActions) {
@@ -52,7 +53,7 @@ public class QLearningAgent extends RLAgent {
                 policy.clear();
                 policy.add(action);
                 maxQ = currentQ;
-            } else if (currentQ == maxQ) {
+            } else if (Objects.equals(currentQ, maxQ)) {
                 policy.add(action);
             }
         }
@@ -68,16 +69,19 @@ public class QLearningAgent extends RLAgent {
         List<Action> actions = this.getPolitique(e);
         
         if (actions.size() > 0) {
-            Double sum = 0.;
+            Double max = 0.;
             
             for (Action action : actions) {
-                sum += this.getQValeur(e, action);
+                if(this.getQValeur(e, action) > max)
+                {
+                    max = this.getQValeur(e, action);
+                }
             }
             
-            return sum / actions.size();
+            return max;
         }
         
-        return - Double.MAX_VALUE;
+        return 0.;
 
     }
 
@@ -88,7 +92,7 @@ public class QLearningAgent extends RLAgent {
      */
     @Override
     public double getQValeur(Etat e, Action a) {
-        return this.qValues.getOrDefault(new Pair(e, a), - Double.MAX_VALUE);
+        return this.qValues.getOrDefault(new Pair(e, a), 0.);
     }
 
     /**
@@ -126,13 +130,7 @@ public class QLearningAgent extends RLAgent {
      */
     @Override
     public void endStep(Etat e, Action a, Etat esuivant, double reward) {
-        Double maxQ = - Double.MAX_VALUE;
-        for (Map.Entry<Pair<Etat, Action>, Double> entry : this.qValues.entrySet()) {
-            if (entry.getKey().getKey().equals(e) && maxQ < entry.getValue()) {
-                maxQ = entry.getValue();
-            }
-        }
-        Double value = (1 - this.alpha) * this.getQValeur(e, a) + alpha * (reward + this.gamma * maxQ);
+        Double value = (1 - this.alpha) * this.getQValeur(e, a) + alpha * (reward + this.gamma * this.getValeur(esuivant));
         this.setQValeur(e, a, value);
 
     }

@@ -39,13 +39,9 @@ public class StrategyGreedy extends StrategyExploration {
         }
         
         if (rand.nextDouble() < this.epsilon) {
-            List<Action> allActions = new ArrayList<>();
-            allActions.add(ActionGridworld.NORD);
-            allActions.add(ActionGridworld.SUD);
-            allActions.add(ActionGridworld.EST);
-            allActions.add(ActionGridworld.OUEST);
+            List<Action> allActions = this.agent.getActionsLegales(_e);
             
-            return allActions.get(rand.nextInt(4));
+            return allActions.get(rand.nextInt(allActions.size()));
         } else {
             List<Action> politique = this.agent.getPolitique(_e);
             if ( politique.size() > 0) {
