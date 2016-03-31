@@ -6,8 +6,6 @@ import java.util.Random;
 import agent.rlagent.RLAgent;
 import environnement.Action;
 import environnement.Etat;
-import environnement.gridworld.ActionGridworld;
-import java.util.ArrayList;
 
 /**
  * Strategie qui renvoit une action aleatoire avec probabilite epsilon, une
@@ -15,14 +13,29 @@ import java.util.ArrayList;
  * acces a un RLAgent par l'intermediaire de sa classe mere.
  *
  * @author lmatignon
+ * @author Bruno Buiret (bruno.buiret@etu.univ-lyon1.fr)
+ * @author Thomas Arnaud (thomas.arnaud@etu.univ-lyon1.fr)
  *
  */
-public class StrategyGreedy extends StrategyExploration {
+public class StrategyGreedy extends StrategyExploration
+{
+    /**
+     * 
+     */
     protected double epsilon;
 
-    private Random rand = new Random();
+    /**
+     * 
+     */
+    protected Random rand = new Random();
 
-    public StrategyGreedy(RLAgent agent, double epsilon) {
+    /**
+     * 
+     * @param agent
+     * @param epsilon 
+     */
+    public StrategyGreedy(RLAgent agent, double epsilon)
+    {
         super(agent);
         this.epsilon = epsilon;
     }
@@ -32,27 +45,34 @@ public class StrategyGreedy extends StrategyExploration {
      * @return action selectionnee par la strategie d'exploration
      */
     @Override
-    public Action getAction(Etat _e) {
+    public Action getAction(Etat _e)
+    {
         //getAction renvoi null si _e absorbant
-        if (this.agent.getEnv().estAbsorbant()) {
+        if(this.agent.getEnv().estAbsorbant())
+        {
             return null;
         }
-        
-        if (rand.nextDouble() < this.epsilon) {
+
+        if(rand.nextDouble() < this.epsilon)
+        {
             List<Action> allActions = this.agent.getActionsLegales(_e);
-            
+
             return allActions.get(rand.nextInt(allActions.size()));
-        } else {
+        }
+        else
+        {
             List<Action> politique = this.agent.getPolitique(_e);
-            if ( politique.size() > 0) {
-                return politique.get(0);
-            } else {
-                return null;
-            }
+            
+            return politique.size() > 0 ? politique.get(0) : null;
         }
     }
 
-    public void setEpsilon(double epsilon) {
+    /**
+     * 
+     * @param epsilon 
+     */
+    public void setEpsilon(double epsilon)
+    {
         this.epsilon = epsilon;
     }
 }
